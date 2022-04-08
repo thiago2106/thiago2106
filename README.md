@@ -1,4 +1,4 @@
-- 👋 Hi, I’m @thiago2106
+- 👋 Hi, I’m Mauro
 - 👀 I’m interested in COBOL programming, I'am working on a program coded enterily in COBOL to show some of mi skills developing, resolving and converting
 - some ideas in real code, I really like COBOL because it is structure, efficient and flexible even though it a very old lenguage code.
 - 🌱 I’m currently learning COBOL to get a new job position, I'm very intrested in create a new carrer devoloping in COBOL
