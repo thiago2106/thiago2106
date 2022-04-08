@@ -1,0 +1,423 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PRACTICA.
+       ENVIRONMENT DIVISION.
+
+       INPUT-OUTPUT SECTION.
+
+       FILE-CONTROL.
+
+           SELECT OPTIONAL CLIENTE ASSIGN TO
+                                   "C:\Users\Mauro\bin\CLIENTE.DAT"
+               ORGANIZATION INDEXED
+               ACCESS MODE DYNAMIC
+               RECORD KEY IS CLI_DNI
+               STATUS ST_FILE.
+               
+
+
+       DATA DIVISION.
+
+       FILE SECTION.
+
+       FD CLIENTE.
+
+       01 REG_CLIENTES.
+           03 CLI_DNI          PIC X(8).
+           03 FILLER           PIC X VALUE IS SPACE.
+           03 CLI_NOMBRE       PIC A(15).
+           03 CLI_APELLIDO     PIC A(15).
+           03 FILLER           PIC X VALUE IS SPACE.
+           03 CLI_CEL          PIC 9(10).
+           03 FILLER           PIC X VALUE IS SPACE.
+           03 CLI_OS           PIC A(13).
+
+      
+       WORKING-STORAGE SECTION.
+       
+       01 ESTATUS_FLAGS.
+           03 ST_FILE          PIC XX.
+      *     03 ST_FILEBKP       PIC XX.
+           03 HUBO-ERROR       PIC 9.
+           03 LAST_REC         PIC X VALUE IS 'N'.
+      *     03 LAST_RECBKP      PIC X VALUE IS 'N'.
+           03 EXISTE           PIC X VALUE IS 'S'.
+           
+       01 MENU_ST          PIC X.
+       01 WKS-OPCION       PIC 9.
+       01 OS_OPCION        PIC 9.
+       01 EST_OPCION       PIC 9.
+       01 NUSEROP          PIC AA.
+       01 REP_OP           PIC AA.
+       01 BUSQ_NUSER             PIC X.
+       01 BUSQ_EST_OP            PIC X.
+       
+       01 TARIFAS.
+           03 PRECIO1          PIC 9(5) VALUE IS 500.
+           03 PRECIO2          PIC 9(5) VALUE IS 1000.
+           03 PRECIO3          PIC 9(5) VALUE IS 1300.
+           
+       01 VALOR_EST        PIC 9(5).    
+       01 RECAUDA_DIA      PIC 9(5) VALUE IS 0.
+       01 MENSAJE          PIC X(20).
+
+       01 LINEAS           PIC X(120) VALUE ALL '-'.
+       
+       01 W_REG_CLIENTES.
+           03 WKS_CLI_ID       PIC X(8) VALUE ALL ' '.
+           03 W_CLI_NOMBRE       PIC A(15).
+           03 W_CLI_APELLIDO     PIC A(15).
+           03 W_CLI_CEL          PIC 9(10).
+           03 W_CLI_OS           PIC A(13).
+           
+
+       01 CONTA_TURNO            PIC 99 VALUE IS 0.
+           
+       77 pausa            pic x.
+
+
+       PROCEDURE DIVISION.
+       MAIN-PROCEDURE.
+
+           PERFORM ABRO-ARCHIVO.
+           PERFORM LEO-DATOS UNTIL LAST_REC = 'Y'.
+           ACCEPT pausa.
+           PERFORM MENU.
+           PERFORM SALIDA.
+           STOP RUN.
+
+       ABRO-ARCHIVO.
+           OPEN I-O CLIENTE.
+           IF ST_FILE > "07"
+               DISPLAY "ERROR AL ABRIR EL ARCHIVO"
+               DISPLAY ST_FILE
+           ELSE
+               DISPLAY "INICIALIZACION PERFECTA"
+           END-IF.
+               
+       LEO-DATOS.
+           INITIALIZE REG_CLIENTES.
+      *     START CLIENTE KEY IS NOT LESS THAN CLI_DNI
+           READ CLIENTE NEXT RECORD
+           AT END MOVE 'Y' TO LAST_REC
+           END-READ.
+           
+           DISPLAY REG_CLIENTES.
+           
+                  
+       MENU.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           display "BIENVENIDO A PROGRAMA LABRATORIO" COL 40 LINE 5.
+           display LINEAS                                    LINE 6.
+           display " "                                COL 10 LINE 7.
+           display "OPCIONES"                         COL 10 LINE 8.
+           display " "                                COL 10 LINE 9.
+           display "1. ALTA DE USUARIO"               COL 10 LINE 10.
+           display "2. CONSULTA DE USUARIO"           COL 10 LINE 11.
+      *     display "3. CONSULTA DE OBRA SOCIAL".
+      *     display "4. CONSULTA DE ESTUDIOS".
+           DISPLAY "5. REPORTE DEL DIA"               COL 10 LINE 12.
+           displAy LINEAS                                    LINE 20.
+           display "6. SALIR"                         COL 10 LINE 14.
+           display " "                                COL 10 LINE 15.
+           display "INGRESE LA OPCION: "              COL 10 LINE 16.
+           DISPLAY "0. BACKUP FILE"                   COL 10 LINE 24.
+           ACCEPT WKS-OPCION COL 10 LINE 17.
+           
+
+
+
+           IF WKS-OPCION > 6
+               DISPLAY "INGRESE LA OPCION QUE CORRESPONDE"
+               ACCEPT pausa
+               go to MENU
+
+           ELSE
+               IF WKS-OPCION = 6 THEN PERFORM SALIR
+               ELSE
+                   EVALUATE WKS-OPCION
+                       WHEN 1 PERFORM ALTA-USUARIO
+                       WHEN 2 PERFORM BUSQUEDA-USUARIO
+                       WHEN 3 PERFORM OBRASOCIAL
+                       WHEN 4 PERFORM ESTUDIOS
+                       WHEN 5 PERFORM REPORTE
+                       WHEN 6 PERFORM SALIR
+                       WHEN 0 PERFORM BACKUP
+
+                   END-EVALUATE.
+
+
+       ALTA-USUARIO.
+               DISPLAY " " COL 1 LINE 1 ERASE EOS.
+               DISPLAY "ALTA DE USUARIO"       COL 10 LINE 5.
+               DISPLAY LINEAS                         LINE 6.
+               DISPLAY LINEAS                         LINE 20. 
+               DISPLAY "INGRESE DNI: "         COL 10 LINE 8.
+               ACCEPT WKS_CLI_ID               COL 30 LINE 8.
+               PERFORM USR-EXISTE.
+           
+            
+           USR-EXISTE.
+               MOVE WKS_CLI_ID TO CLI_DNI
+               READ CLIENTE INVALID KEY MOVE "N" TO EXISTE.
+               IF EXISTE = 'N' THEN
+                   DISPLAY "INGRESE NOMBRE: "      COL 10 LINE 10
+                   ACCEPT W_CLI_NOMBRE             COL 30 LINE 10
+                   DISPLAY "INGRESE APELLIDO: "    COL 10 LINE 12
+                   ACCEPT W_CLI_APELLIDO           COL 30 LINE 12
+                   DISPLAY "INGRESE CELULAR: "     COL 10 LINE 14
+                   ACCEPT W_CLI_CEL                COL 30 LINE 14
+               
+                   PERFORM OBRASOCIAL
+                   PERFORM GRABO-DATOS
+           
+                   DISPLAY " " COL 1 LINE 1 ERASE EOS
+                   DISPLAY LINEAS                         LINE 6
+                   DISPLAY LINEAS                         LINE 20
+                   DISPLAY "DESEA INGRESAR UN NUEVO USUARIO? S/N: "
+                   COL 30 LINE 15
+
+                   ACCEPT NUSEROP COL 70 LINE 15
+                   PERFORM VALIDAR_USR
+               ELSE
+                   DISPLAY " " COL 1 LINE 1 ERASE EOS
+                   DISPLAY LINEAS                         LINE 6
+                   DISPLAY LINEAS                         LINE 20
+                   DISPLAY "EL USUARIO YA EXISTE"
+                                                   COL 30 LINE 15
+                   ACCEPT pausa
+                   PERFORM BUSQUEDA-USUARIO
+               END-IF.
+                   
+
+           VALIDAR_USR.
+                   IF NUSEROP = 'S' OR 's' OR 'si' OR 'SI'
+                   PERFORM ALTA-USUARIO
+                   ELSE
+                       IF NUSEROP = 'N' OR 'n' OR 'NO' OR 'no'
+                           PERFORM MENU
+                       ELSE
+                           DISPLAY "INGRESE SI O NO" LINE 19 COL 10
+                           ACCEPT NUSEROP LINE 16 COL 50
+                           PERFORM VALIDAR_USR
+                       END-IF
+                   END-IF
+           STOP RUN.
+
+       OBRASOCIAL.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           DISPLAY "OBRASOCIAL"            COL 10 LINE 5
+           DISPLAY LINEAS                         LINE 6
+           DISPLAY " "                     COL 10 LINE 7
+           DISPLAY "1. OSDE"               COL 10 LINE 8
+           DISPLAY "2. GALENO"             COL 10 LINE 10
+           DISPLAY "3. SWISS MEDICAL"      COL 10 LINE 12
+           DISPLAY "4. PARTICULAR"         COL 10 LINE 14
+           DISPLAY " "                     COL 10 LINE 15
+           DISPLAY "INGRESE LA OPCION: "    COL 10 LINE 16
+           DISPLAY LINEAS                         LINE 20
+           ACCEPT OS_OPCION COL 39 LINE 16.
+
+
+           IF OS_OPCION > 4 OR EQUAL TO 0
+      *         DISPLAY " " COL 1 LINE 1 ERASE EOS
+      *         DISPLAY LINEAS  line 6
+      *         DISPLAY "INGRESE LA OPCION QUE CORRESPONDE" 
+      *                                         LINE 14 COL 30
+      *         DISPLAY LINEAS  line 20
+      *         DISPLAY pausa
+               PERFORM OBRASOCIAL
+               
+           ELSE
+               EVALUATE OS_OPCION
+               WHEN 1 MOVE 'OSDE' TO W_CLI_OS
+               WHEN 2 MOVE 'GALENO' TO W_CLI_OS
+               WHEN 3 MOVE 'SWISS MEDICAL' TO W_CLI_OS
+               WHEN 4 MOVE 'PARTICULAR' TO W_CLI_OS
+               END-EVALUATE
+               ACCEPT pausa
+
+           END-IF.
+
+
+
+       BUSQUEDA-USUARIO.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           DISPLAY "BUSQUEDA DE USUARIOS"  COL 10 LINE 5.
+           DISPLAY "INGRESE DOCUMENTO: " COL 10 LINE 8.
+           DISPLAY LINEAS  line 6.
+           display LINEAS  line 20.
+           ACCEPT WKS_CLI_ID COL 29 LINE 8.
+
+           MOVE WKS_CLI_ID TO CLI_DNI
+           READ CLIENTE INVALID KEY MOVE "N" TO EXISTE.
+           IF EXISTE = 'N' THEN
+               DISPLAY " " COL 1 LINE 1 ERASE EOS
+               DISPLAY LINEAS  line 6
+               DISPLAY LINEAS  line 20
+               DISPLAY "EL USUARIO NO EXISTE, DESEA AGREGARLO S/N?: "
+                                           LINE 13 COL 30
+               ACCEPT BUSQ_NUSER LINE 13 COL 75
+               IF BUSQ_NUSER = 'S'
+                   PERFORM ALTA-USUARIO
+               ELSE
+                   PERFORM MENU        
+               ACCEPT pausa
+           ELSE
+               IF EXISTE = 'S'
+                   MOVE CLI_NOMBRE TO W_CLI_NOMBRE
+                   MOVE CLI_APELLIDO TO W_CLI_APELLIDO
+                   MOVE CLI_CEL TO W_CLI_CEL
+                   MOVE CLI_OS TO W_CLI_OS
+                         
+               DISPLAY LINEAS                         LINE 6
+               DISPLAY LINEAS                         LINE 20
+               DISPLAY "NOMBRE: "      COL 10 LINE 10
+               DISPLAY W_CLI_NOMBRE               COL 19 LINE 10
+               DISPLAY "APELLIDO: "    COL 10 LINE 12
+               DISPLAY W_CLI_APELLIDO             COL 21 LINE 12
+               DISPLAY "CELULAR: "     COL 10 LINE 14
+               DISPLAY W_CLI_CEL                  COL 20 LINE 14
+               DISPLAY "OBRA SOCIAL: " COL 10 LINE 16
+               DISPLAY W_CLI_OS                   COL 23 LINE 16
+               END-IF.
+                   
+           DISPLAY "DESEA REALIZAR ESTUDIO: S/N:" LINE 18 COL 10
+           ACCEPT BUSQ_EST_OP LINE 18 COL 40
+           IF BUSQ_EST_OP = 'S' OR 's'
+               ADD 1 TO CONTA_TURNO
+                   IF CONTA_TURNO > 3
+                       DISPLAY " " COL 1 LINE 1 ERASE EOS
+                       DISPLAY LINEAS                         LINE 6
+                       DISPLAY "++++++++++++++++++++++++++++++++++++++"
+                       LINE 12 COL 40
+                       DISPLAY "SE FINALIZARON LOS TURNO PARA LA FECHA"
+                       LINE 13 COL 40
+                       DISPLAY "  PRESIONE ENTER PARA VOLVER AL MENU  "
+                       LINE 16 COL 40
+                       DISPLAY "++++++++++++++++++++++++++++++++++++++"
+                       LINE 17 COL 40
+                       DISPLAY LINEAS                         LINE 20
+                       ACCEPT pausa
+                       PERFORM MENU
+                   ELSE
+               PERFORM ESTUDIOS
+           ELSE
+               PERFORM MENU.
+           
+          
+                   
+           IF ST_FILE = "99" GO TO LEO-DATOS.
+           IF ST_FILE > "07" AND ST_FILE NOT = "23"
+                 STRING "Error leyendo Clientes Status = " ST_FILE
+                 DELIMITED BY SIZE INTO MENSAJE
+                 DISPLAY MENSAJE LINE 23 COL 1
+                 MOVE 1   TO HUBO-ERROR
+                 MOVE "N" TO EXISTE.
+
+           ACCEPT pausa.
+           go to MENU.
+
+
+       ESTUDIOS.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           DISPLAY "ESTUDIOS"              COL 10 LINE 5.
+           DISPLAY LINEAS                         LINE 6.
+           DISPLAY " "                     COL 10 LINE 7.
+           DISPLAY "1. ORINA"              COL 10 LINE 8.
+           DISPLAY "2. SANGRE"             COL 10 LINE 10.
+           DISPLAY "3. ORINA Y SANGRE"     COL 10 LINE 12.
+           DISPLAY " "                     COL 10 LINE 13.
+           DISPLAY "INGRESE LA OPCION: "     COL 10 LINE 14.
+           DISPLAY LINEAS                         LINE 20.
+           ACCEPT EST_OPCION COL 30 LINE 14.
+
+
+           IF EST_OPCION > 3 OR EQUAL TO 0
+              DISPLAY "INGRESE LA OPCION QUE CORRESPONDE" COL 10 LINE 13
+               ACCEPT pausa
+               PERFORM ESTUDIOS
+           ELSE
+               EVALUATE EST_OPCION
+                   WHEN 1 MOVE PRECIO1 TO VALOR_EST
+                   WHEN 2 MOVE PRECIO2 TO VALOR_EST
+                   WHEN 3 MOVE PRECIO3 TO VALOR_EST
+               END-EVALUATE
+               DISPLAY "EL VALOR DEL ESTUDIO ES DE $" LINE 18 COL 10
+               DISPLAY VALOR_EST LINE 18 COL 39
+               ACCEPT pausa
+           END-IF
+           COMPUTE RECAUDA_DIA = VALOR_EST + RECAUDA_DIA.
+           DISPLAY RECAUDA_DIA.
+
+           PERFORM MENU.
+
+
+       REPORTE.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           DISPLAY LINEAS                         LINE 6.
+           DISPLAY "REPORTE DE ALTA"               COL 10 LINE 8.
+           DISPLAY REG_CLIENTES                           LINE 10.
+           DISPLAY RECAUDA_DIA                     COL 10 LINE 11.
+           DISPLAY "DESEA REGRESAR AL MENU? S/N"   COL 10 LINE 15.
+           DISPLAY LINEAS                         LINE 20.
+           ACCEPT REP_OP                           COL 10 LINE 16.
+           
+           PERFORM VALIDAR_REP.
+
+       VALIDAR_REP.
+           IF REP_OP = 'S' OR 's' OR 'si' OR 'SI'
+                   PERFORM MENU
+           ELSE
+               IF REP_OP = 'N' OR 'n' OR 'NO' OR 'no'
+                  DISPLAY "SALIENDO DEL PROGRAMA"
+                  ACCEPT pausa
+                  PERFORM SALIR
+               ELSE
+                   DISPLAY "INGRESE SI O NO"
+                   ACCEPT REP_OP
+                   PERFORM VALIDAR_REP
+               END-IF
+           END-IF.
+
+
+
+       SALIR.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           DISPLAY "ENTRO A PERFORM SALIR"      COL 1 LINE 2.
+           PERFORM GRABO-DATOS.
+           PERFORM CIERRO-ARCHIVO.
+           PERFORM SALIDA.
+
+       GRABO-DATOS.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           DISPLAY "ENTRO A GRABO DATOS"        COL 1 LINE 3.
+           MOVE WKS_CLI_ID TO CLI_DNI
+           MOVE W_CLI_NOMBRE TO CLI_NOMBRE
+           MOVE W_CLI_APELLIDO TO CLI_APELLIDO
+           MOVE W_CLI_CEL TO CLI_CEL
+           MOVE W_CLI_OS TO CLI_OS
+           WRITE REG_CLIENTES.
+
+       CIERRO-ARCHIVO.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           DISPLAY "ENTRO A CIERRO ARCHIHVO"    COL 1 LINE 4.
+           ACCEPT pausa.
+           CLOSE CLIENTE.
+           PERFORM SALIDA.
+           
+
+       SALIDA.
+           DISPLAY " " COL 1 LINE 1 ERASE EOS.
+           DISPLAY LINEAS  LINE 6.
+           DISPLAY "***************************************"
+           COL 40 LINE 15.
+           DISPLAY " MUCHAS GRACIAS POR USAR ESTE SOFTWARE "
+           COL 40 LINE 16.
+           DISPLAY "***************************************"
+           COL 40 LINE 17.
+           DISPLAY LINEAS LINE 24.
+           
+           ACCEPT pausa.
+           STOP RUN.
+
+       END PROGRAM PRACTICA.
